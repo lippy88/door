@@ -8,15 +8,18 @@
         body {
             font-family: Arial, sans-serif;
             display: flex;
-            align-items: flex-start;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
+            padding: 0;
         }
         #carousel {
             display: flex;
             flex-direction: column;
-            margin-right: 20px;
+            margin-bottom: 20px;
+            align-items: center;
         }
         .carousel-item {
             margin-bottom: 10px;
@@ -27,12 +30,14 @@
             flex-direction: column;
             align-items: center;
         }
-        #image-display {
-            margin-top: 20px;
-            max-width: 100%;
-            max-height: 400px;
-            border: 2px dashed #ccc;
+        #image-display-container {
             position: relative;
+            max-width: 100%;
+            border: 2px dashed #ccc;
+        }
+        #image-display {
+            width: 100%;
+            max-height: 400px;
         }
         .overlay {
             position: absolute;
@@ -41,6 +46,7 @@
             cursor: move;
             background-size: contain;
             background-repeat: no-repeat;
+            touch-action: none;
         }
         .resize-handle {
             position: absolute;
@@ -64,6 +70,19 @@
             border: 1px solid black;
             border-radius: 3px;
         }
+        @media (max-width: 600px) {
+            body {
+                flex-direction: column;
+            }
+            #carousel {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .carousel-item {
+                margin: 5px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -74,9 +93,9 @@
         <img class="carousel-item" src="door4.jpg" alt="Door 4" width="100" draggable="true">
     </div>
     <div id="main-content">
-        <h1>Gary Glass Wall Visualiser - Try before you buy ;) </h1>
+        <h1>Upload a Picture of Your Room</h1>
         <input type="file" id="file-input" accept="image/*">
-        <div id="image-display-container" style="position: relative;">
+        <div id="image-display-container">
             <img id="image-display" src="" alt="Your room will be displayed here">
         </div>
     </div>
@@ -155,13 +174,53 @@
                 overlayImage.style.left = `${e.offsetX - 50}px`;
                 overlayImage.style.top = `${e.offsetY - 75}px`;
 
-                // Make the overlay image draggable within the main image container
+                // Variables for touch gestures
+                let initialDistance = null;
+                let initialAngle = null;
+
+                // Function to calculate distance between two points
+                function getDistance(touches) {
+                    return Math.sqrt(
+                        Math.pow(touches[0].clientX - touches[1].clientX, 2) +
+                        Math.pow(touches[0].clientY - touches[1].clientY, 2)
+                    );
+                }
+
+                // Function to calculate angle between two points
+                function getAngle(touches) {
+                    return Math.atan2(
+                        touches[1].clientY - touches[0].clientY,
+                        touches[1].clientX - touches[0].clientX
+                    ) * (180 / Math.PI);
+                }
+
+                // Handle touch events
+                overlayImage.addEventListener('touchstart', function(event) {
+                    if (event.touches.length === 2) {
+                        initialDistance = getDistance(event.touches);
+                        initialAngle = getAngle(event.touches);
+                    }
+                });
+
+                overlayImage.addEventListener('touchmove', function(event) {
+                    if (event.touches.length === 2) {
+                        const currentDistance = getDistance(event.touches);
+                        const scale = currentDistance / initialDistance;
+                        overlayImage.style.width = `${100 * scale}px`;
+                        overlayImage.style.height = `${150 * scale}px`;
+
+                        const currentAngle = getAngle(event.touches);
+                        const rotation = currentAngle - initialAngle;
+                        overlayImage.style.transform = `rotate(${rotation}deg)`;
+                    }
+                });
+
+                // Desktop interactions
                 let isDragging = false;
                 let isResizing = false;
                 let isRotating = false;
                 let initialMouseX, initialMouseY;
                 let initialWidth, initialHeight;
-                let initialAngle = 0;
 
                 overlayImage.addEventListener('mousedown', function(event) {
                     if (event.target === resizeHandle) {
@@ -200,12 +259,4 @@
                 });
 
                 document.addEventListener('mouseup', function() {
-                    isDragging = false;
-                    isResizing = false;
-                    isRotating = false;
-                });
-            }
-        });
-    </script>
-</body>
-</html>
+                   
