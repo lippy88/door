@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,20 +39,30 @@
             top: 0;
             left: 0;
             cursor: move;
+            background-size: contain;
+            background-repeat: no-repeat;
         }
         .resize-handle {
             position: absolute;
-            width: 10px;
-            height: 10px;
+            width: 20px;
+            height: 20px;
             background-color: red;
             cursor: se-resize;
         }
         .rotate-handle {
             position: absolute;
-            width: 10px;
-            height: 10px;
+            width: 20px;
+            height: 20px;
             background-color: blue;
             cursor: pointer;
+        }
+        .handle-label {
+            position: absolute;
+            background-color: white;
+            padding: 2px 5px;
+            font-size: 12px;
+            border: 1px solid black;
+            border-radius: 3px;
         }
     </style>
 </head>
@@ -108,21 +117,36 @@
                 overlayImage.style.width = '100px';
                 overlayImage.style.height = '150px';
                 overlayImage.style.backgroundImage = `url(${src})`;
-                overlayImage.style.backgroundSize = 'cover';
-                overlayImage.style.transform = 'rotate(0deg)';
+                overlayImage.style.backgroundSize = 'contain';
+                overlayImage.style.backgroundRepeat = 'no-repeat';
                 overlayImage.classList.add('overlay');
 
                 const resizeHandle = document.createElement('div');
                 resizeHandle.classList.add('resize-handle');
                 resizeHandle.style.right = '0';
                 resizeHandle.style.bottom = '0';
-                overlayImage.appendChild(resizeHandle);
+
+                const resizeLabel = document.createElement('div');
+                resizeLabel.classList.add('handle-label');
+                resizeLabel.innerText = 'Resize';
+                resizeLabel.style.right = '25px';
+                resizeLabel.style.bottom = '0';
 
                 const rotateHandle = document.createElement('div');
                 rotateHandle.classList.add('rotate-handle');
                 rotateHandle.style.right = '0';
                 rotateHandle.style.top = '0';
+
+                const rotateLabel = document.createElement('div');
+                rotateLabel.classList.add('handle-label');
+                rotateLabel.innerText = 'Rotate';
+                rotateLabel.style.right = '25px';
+                rotateLabel.style.top = '0';
+
+                overlayImage.appendChild(resizeHandle);
+                overlayImage.appendChild(resizeLabel);
                 overlayImage.appendChild(rotateHandle);
+                overlayImage.appendChild(rotateLabel);
 
                 imageDisplayContainer.appendChild(overlayImage);
 
