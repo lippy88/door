@@ -3,28 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Room Image Upload</title>
+    <title>Room Image Upload with Carousel</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             height: 100vh;
             margin: 0;
+        }
+        #carousel {
+            display: flex;
+            flex-direction: column;
+            margin-right: 20px;
+        }
+        .carousel-item {
+            margin-bottom: 10px;
+            cursor: grab;
+        }
+        #main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         #image-display {
             margin-top: 20px;
             max-width: 100%;
             max-height: 400px;
+            border: 2px dashed #ccc;
+            position: relative;
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
         }
     </style>
 </head>
 <body>
-    <h1>Upload a Picture of Your Room</h1>
-    <input type="file" id="file-input" accept="image/*">
-    <img id="image-display" src="" alt="Your room will be displayed here">
+    <div id="carousel">
+        <img class="carousel-item" src="door1.jpg" alt="Door 1" width="100" draggable="true">
+        <img class="carousel-item" src="door2.jpg" alt="Door 2" width="100" draggable="true">
+        <img class="carousel-item" src="door3.jpg" alt="Door 3" width="100" draggable="true">
+        <img class="carousel-item" src="door4.jpg" alt="Door 4" width="100" draggable="true">
+    </div>
+    <div id="main-content">
+        <h1>Upload a Picture of Your Room</h1>
+        <input type="file" id="file-input" accept="image/*">
+        <div id="image-display-container" style="position: relative;">
+            <img id="image-display" src="" alt="Your room will be displayed here">
+        </div>
+    </div>
 
     <script>
         document.getElementById('file-input').addEventListener('change', function(event) {
@@ -37,6 +67,52 @@
                 reader.readAsDataURL(file);
             }
         });
+
+        const carouselItems = document.querySelectorAll('.carousel-item');
+        const imageDisplayContainer = document.getElementById('image-display-container');
+
+        carouselItems.forEach(item => {
+            item.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('text/plain', e.target.src);
+            });
+        });
+
+        imageDisplayContainer.addEventListener('dragover', function(e) {
+            e.preventDefault();
+        });
+
+        imageDisplayContainer.addEventListener('drop', function(e) {
+            e.preventDefault();
+            const src = e.dataTransfer.getData('text/plain');
+            const overlayImage = document.createElement('img');
+            overlayImage.src = src;
+            overlayImage.classList.add('overlay');
+            overlayImage.style.width = '100px';
+            imageDisplayContainer.appendChild(overlayImage);
+
+            // Make the overlay image draggable within the main image container
+            overlayImage.style.position = 'absolute';
+            overlayImage.style.left = `${e.offsetX - 50}px`;
+            overlayImage.style.top = `${e.offsetY - 50}px`;
+
+            let isDragging = false;
+
+            overlayImage.addEventListener('mousedown', function() {
+                isDragging = true;
+            });
+
+            document.addEventListener('mousemove', function(event) {
+                if (isDragging) {
+                    overlayImage.style.left = `${event.clientX - imageDisplayContainer.offsetLeft - 50}px`;
+                    overlayImage.style.top = `${event.clientY - imageDisplayContainer.offsetTop - 50}px`;
+                }
+            });
+
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+            });
+        });
     </script>
 </body>
 </html>
+
