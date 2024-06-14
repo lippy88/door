@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,6 +39,21 @@
             position: absolute;
             top: 0;
             left: 0;
+            cursor: move;
+        }
+        .resize-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            cursor: se-resize;
+        }
+        .rotate-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: blue;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -70,10 +86,13 @@
 
         const carouselItems = document.querySelectorAll('.carousel-item');
         const imageDisplayContainer = document.getElementById('image-display-container');
+        let overlayImage = null;
 
         carouselItems.forEach(item => {
             item.addEventListener('dragstart', function(e) {
-                e.dataTransfer.setData('text/plain', e.target.src);
+                if (!overlayImage) {
+                    e.dataTransfer.setData('text/plain', e.target.src);
+                }
             });
         });
 
@@ -83,36 +102,86 @@
 
         imageDisplayContainer.addEventListener('drop', function(e) {
             e.preventDefault();
-            const src = e.dataTransfer.getData('text/plain');
-            const overlayImage = document.createElement('img');
-            overlayImage.src = src;
-            overlayImage.classList.add('overlay');
-            overlayImage.style.width = '100px';
-            imageDisplayContainer.appendChild(overlayImage);
+            if (!overlayImage) {
+                const src = e.dataTransfer.getData('text/plain');
+                overlayImage = document.createElement('div');
+                overlayImage.style.width = '100px';
+                overlayImage.style.height = '150px';
+                overlayImage.style.backgroundImage = `url(${src})`;
+                overlayImage.style.backgroundSize = 'cover';
+                overlayImage.style.transform = 'rotate(0deg)';
+                overlayImage.classList.add('overlay');
 
-            // Make the overlay image draggable within the main image container
-            overlayImage.style.position = 'absolute';
-            overlayImage.style.left = `${e.offsetX - 50}px`;
-            overlayImage.style.top = `${e.offsetY - 50}px`;
+                const resizeHandle = document.createElement('div');
+                resizeHandle.classList.add('resize-handle');
+                resizeHandle.style.right = '0';
+                resizeHandle.style.bottom = '0';
+                overlayImage.appendChild(resizeHandle);
 
-            let isDragging = false;
+                const rotateHandle = document.createElement('div');
+                rotateHandle.classList.add('rotate-handle');
+                rotateHandle.style.right = '0';
+                rotateHandle.style.top = '0';
+                overlayImage.appendChild(rotateHandle);
 
-            overlayImage.addEventListener('mousedown', function() {
-                isDragging = true;
-            });
+                imageDisplayContainer.appendChild(overlayImage);
 
-            document.addEventListener('mousemove', function(event) {
-                if (isDragging) {
-                    overlayImage.style.left = `${event.clientX - imageDisplayContainer.offsetLeft - 50}px`;
-                    overlayImage.style.top = `${event.clientY - imageDisplayContainer.offsetTop - 50}px`;
-                }
-            });
+                // Position the overlay image at the drop point
+                overlayImage.style.position = 'absolute';
+                overlayImage.style.left = `${e.offsetX - 50}px`;
+                overlayImage.style.top = `${e.offsetY - 75}px`;
 
-            document.addEventListener('mouseup', function() {
-                isDragging = false;
-            });
+                // Make the overlay image draggable within the main image container
+                let isDragging = false;
+                let isResizing = false;
+                let isRotating = false;
+                let initialMouseX, initialMouseY;
+                let initialWidth, initialHeight;
+                let initialAngle = 0;
+
+                overlayImage.addEventListener('mousedown', function(event) {
+                    if (event.target === resizeHandle) {
+                        isResizing = true;
+                        initialMouseX = event.clientX;
+                        initialMouseY = event.clientY;
+                        initialWidth = overlayImage.offsetWidth;
+                        initialHeight = overlayImage.offsetHeight;
+                    } else if (event.target === rotateHandle) {
+                        isRotating = true;
+                        initialMouseX = event.clientX;
+                        initialMouseY = event.clientY;
+                    } else {
+                        isDragging = true;
+                        initialMouseX = event.clientX - overlayImage.offsetLeft;
+                        initialMouseY = event.clientY - overlayImage.offsetTop;
+                    }
+                });
+
+                document.addEventListener('mousemove', function(event) {
+                    if (isDragging) {
+                        overlayImage.style.left = `${event.clientX - initialMouseX}px`;
+                        overlayImage.style.top = `${event.clientY - initialMouseY}px`;
+                    } else if (isResizing) {
+                        const deltaX = event.clientX - initialMouseX;
+                        const deltaY = event.clientY - initialMouseY;
+                        overlayImage.style.width = `${initialWidth + deltaX}px`;
+                        overlayImage.style.height = `${initialHeight + deltaY}px`;
+                    } else if (isRotating) {
+                        const centerX = overlayImage.offsetLeft + overlayImage.offsetWidth / 2;
+                        const centerY = overlayImage.offsetTop + overlayImage.offsetHeight / 2;
+                        const angle = Math.atan2(event.clientY - centerY, event.clientX - centerX) * (180 / Math.PI);
+                        initialAngle = angle;
+                        overlayImage.style.transform = `rotate(${angle}deg)`;
+                    }
+                });
+
+                document.addEventListener('mouseup', function() {
+                    isDragging = false;
+                    isResizing = false;
+                    isRotating = false;
+                });
+            }
         });
     </script>
 </body>
 </html>
-
